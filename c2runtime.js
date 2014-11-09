@@ -24287,10 +24287,76 @@ false,false,5925217890185716,false
 			[
 			[
 				-1,
-				cr.system_object.prototype.acts.RestartLayout,
+				cr.system_object.prototype.acts.GoToLayout,
 				null,
 				7305213332381077,
 				false
+				,[
+				[
+					6,
+					"Layout 1"
+				]
+				]
+			]
+,			[
+				-1,
+				cr.system_object.prototype.acts.SetVar,
+				null,
+				6799473436375833,
+				false
+				,[
+				[
+					11,
+					"fookTime"
+				]
+,				[
+					7,
+					[
+						0,
+						0
+					]
+				]
+				]
+			]
+,			[
+				-1,
+				cr.system_object.prototype.acts.SetVar,
+				null,
+				4819260284959913,
+				false
+				,[
+				[
+					11,
+					"PikasCaptured"
+				]
+,				[
+					7,
+					[
+						0,
+						0
+					]
+				]
+				]
+			]
+,			[
+				-1,
+				cr.system_object.prototype.acts.SetVar,
+				null,
+				6586103612133039,
+				false
+				,[
+				[
+					11,
+					"pikaSpawn"
+				]
+,				[
+					7,
+					[
+						0,
+						1
+					]
+				]
+				]
 			]
 			]
 		]
