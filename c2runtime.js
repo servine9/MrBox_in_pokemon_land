@@ -15886,6 +15886,283 @@ cr.plugins_.Audio = function(runtime)
 }());
 ;
 ;
+cr.plugins_.Button = function(runtime)
+{
+	this.runtime = runtime;
+};
+(function ()
+{
+	var pluginProto = cr.plugins_.Button.prototype;
+	pluginProto.Type = function(plugin)
+	{
+		this.plugin = plugin;
+		this.runtime = plugin.runtime;
+	};
+	var typeProto = pluginProto.Type.prototype;
+	typeProto.onCreate = function()
+	{
+	};
+	pluginProto.Instance = function(type)
+	{
+		this.type = type;
+		this.runtime = type.runtime;
+	};
+	var instanceProto = pluginProto.Instance.prototype;
+	instanceProto.onCreate = function()
+	{
+		if (this.runtime.isDomFree)
+		{
+			cr.logexport("[Construct 2] Button plugin not supported on this platform - the object will not be created");
+			return;
+		}
+		this.isCheckbox = (this.properties[0] === 1);
+		this.inputElem = document.createElement("input");
+		if (this.isCheckbox)
+			this.elem = document.createElement("label");
+		else
+			this.elem = this.inputElem;
+		this.labelText = null;
+		this.inputElem.type = (this.isCheckbox ? "checkbox" : "button");
+		this.inputElem.id = this.properties[6];
+		jQuery(this.elem).appendTo(this.runtime.canvasdiv ? this.runtime.canvasdiv : "body");
+		if (this.isCheckbox)
+		{
+			jQuery(this.inputElem).appendTo(this.elem);
+			this.labelText = document.createTextNode(this.properties[1]);
+			jQuery(this.elem).append(this.labelText);
+			this.inputElem.checked = (this.properties[7] !== 0);
+			jQuery(this.elem).css("font-family", "sans-serif");
+			jQuery(this.elem).css("display", "inline-block");
+			jQuery(this.elem).css("color", "black");
+		}
+		else
+			this.inputElem.value = this.properties[1];
+		this.elem.title = this.properties[2];
+		this.inputElem.disabled = (this.properties[4] === 0);
+		this.autoFontSize = (this.properties[5] !== 0);
+		this.element_hidden = false;
+		if (this.properties[3] === 0)
+		{
+			jQuery(this.elem).hide();
+			this.visible = false;
+			this.element_hidden = true;
+		}
+		this.inputElem.onclick = (function (self) {
+			return function(e) {
+				e.stopPropagation();
+				self.runtime.isInUserInputEvent = true;
+				self.runtime.trigger(cr.plugins_.Button.prototype.cnds.OnClicked, self);
+				self.runtime.isInUserInputEvent = false;
+			};
+		})(this);
+		this.elem.addEventListener("touchstart", function (e) {
+			e.stopPropagation();
+		}, false);
+		this.elem.addEventListener("touchmove", function (e) {
+			e.stopPropagation();
+		}, false);
+		this.elem.addEventListener("touchend", function (e) {
+			e.stopPropagation();
+		}, false);
+		jQuery(this.elem).mousedown(function (e) {
+			e.stopPropagation();
+		});
+		jQuery(this.elem).mouseup(function (e) {
+			e.stopPropagation();
+		});
+		jQuery(this.elem).keydown(function (e) {
+			e.stopPropagation();
+		});
+		jQuery(this.elem).keyup(function (e) {
+			e.stopPropagation();
+		});
+		this.lastLeft = 0;
+		this.lastTop = 0;
+		this.lastRight = 0;
+		this.lastBottom = 0;
+		this.lastWinWidth = 0;
+		this.lastWinHeight = 0;
+		this.updatePosition(true);
+		this.runtime.tickMe(this);
+	};
+	instanceProto.saveToJSON = function ()
+	{
+		var o = {
+			"tooltip": this.elem.title,
+			"disabled": !!this.inputElem.disabled
+		};
+		if (this.isCheckbox)
+		{
+			o["checked"] = !!this.inputElem.checked;
+			o["text"] = this.labelText.nodeValue;
+		}
+		else
+		{
+			o["text"] = this.elem.value;
+		}
+		return o;
+	};
+	instanceProto.loadFromJSON = function (o)
+	{
+		this.elem.title = o["tooltip"];
+		this.inputElem.disabled = o["disabled"];
+		if (this.isCheckbox)
+		{
+			this.inputElem.checked = o["checked"];
+			this.labelText.nodeValue = o["text"];
+		}
+		else
+		{
+			this.elem.value = o["text"];
+		}
+	};
+	instanceProto.onDestroy = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		jQuery(this.elem).remove();
+		this.elem = null;
+	};
+	instanceProto.tick = function ()
+	{
+		this.updatePosition();
+	};
+	var last_canvas_offset = null;
+	var last_checked_tick = -1;
+	instanceProto.updatePosition = function (first)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		var left = this.layer.layerToCanvas(this.x, this.y, true);
+		var top = this.layer.layerToCanvas(this.x, this.y, false);
+		var right = this.layer.layerToCanvas(this.x + this.width, this.y + this.height, true);
+		var bottom = this.layer.layerToCanvas(this.x + this.width, this.y + this.height, false);
+		if (!this.visible || !this.layer.visible || right <= 0 || bottom <= 0 || left >= this.runtime.width || top >= this.runtime.height)
+		{
+			if (!this.element_hidden)
+				jQuery(this.elem).hide();
+			this.element_hidden = true;
+			return;
+		}
+		if (left < 1)
+			left = 1;
+		if (top < 1)
+			top = 1;
+		if (right >= this.runtime.width)
+			right = this.runtime.width - 1;
+		if (bottom >= this.runtime.height)
+			bottom = this.runtime.height - 1;
+		var curWinWidth = window.innerWidth;
+		var curWinHeight = window.innerHeight;
+		if (!first && this.lastLeft === left && this.lastTop === top && this.lastRight === right && this.lastBottom === bottom && this.lastWinWidth === curWinWidth && this.lastWinHeight === curWinHeight)
+		{
+			if (this.element_hidden)
+			{
+				jQuery(this.elem).show();
+				this.element_hidden = false;
+			}
+			return;
+		}
+		this.lastLeft = left;
+		this.lastTop = top;
+		this.lastRight = right;
+		this.lastBottom = bottom;
+		this.lastWinWidth = curWinWidth;
+		this.lastWinHeight = curWinHeight;
+		if (this.element_hidden)
+		{
+			jQuery(this.elem).show();
+			this.element_hidden = false;
+		}
+		var offx = Math.round(left) + jQuery(this.runtime.canvas).offset().left;
+		var offy = Math.round(top) + jQuery(this.runtime.canvas).offset().top;
+		jQuery(this.elem).css("position", "absolute");
+		jQuery(this.elem).offset({left: offx, top: offy});
+		jQuery(this.elem).width(Math.round(right - left));
+		jQuery(this.elem).height(Math.round(bottom - top));
+		if (this.autoFontSize)
+			jQuery(this.elem).css("font-size", ((this.layer.getScale(true) / this.runtime.devicePixelRatio) - 0.2) + "em");
+	};
+	instanceProto.draw = function(ctx)
+	{
+	};
+	instanceProto.drawGL = function(glw)
+	{
+	};
+	function Cnds() {};
+	Cnds.prototype.OnClicked = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.IsChecked = function ()
+	{
+		return this.isCheckbox && this.inputElem.checked;
+	};
+	pluginProto.cnds = new Cnds();
+	function Acts() {};
+	Acts.prototype.SetText = function (text)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		if (this.isCheckbox)
+			this.labelText.nodeValue = text;
+		else
+			this.elem.value = text;
+	};
+	Acts.prototype.SetTooltip = function (text)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.elem.title = text;
+	};
+	Acts.prototype.SetVisible = function (vis)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.visible = (vis !== 0);
+	};
+	Acts.prototype.SetEnabled = function (en)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.inputElem.disabled = (en === 0);
+	};
+	Acts.prototype.SetFocus = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.inputElem.focus();
+	};
+	Acts.prototype.SetBlur = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.inputElem.blur();
+	};
+	Acts.prototype.SetCSSStyle = function (p, v)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		jQuery(this.elem).css(p, v);
+	};
+	Acts.prototype.SetChecked = function (c)
+	{
+		if (this.runtime.isDomFree || !this.isCheckbox)
+			return;
+		this.inputElem.checked = (c === 1);
+	};
+	Acts.prototype.ToggleChecked = function ()
+	{
+		if (this.runtime.isDomFree || !this.isCheckbox)
+			return;
+		this.inputElem.checked = !this.inputElem.checked;
+	};
+	pluginProto.acts = new Acts();
+	function Exps() {};
+	pluginProto.exps = new Exps();
+}());
+;
+;
 cr.plugins_.Keyboard = function(runtime)
 {
 	this.runtime = runtime;
@@ -17563,6 +17840,777 @@ cr.plugins_.Sprite = function(runtime)
 	Exps.prototype.ImageHeight = function (ret)
 	{
 		ret.set_float(this.curFrame.height);
+	};
+	pluginProto.exps = new Exps();
+}());
+/* global cr,log,assert2 */
+/* jshint globalstrict: true */
+/* jshint strict: true */
+;
+;
+cr.plugins_.Spritefont2 = function(runtime)
+{
+	this.runtime = runtime;
+};
+(function ()
+{
+	var pluginProto = cr.plugins_.Spritefont2.prototype;
+	pluginProto.onCreate = function ()
+	{
+	};
+	pluginProto.Type = function(plugin)
+	{
+		this.plugin = plugin;
+		this.runtime = plugin.runtime;
+	};
+	var typeProto = pluginProto.Type.prototype;
+	typeProto.onCreate = function()
+	{
+		if (this.is_family)
+			return;
+		this.texture_img = new Image();
+		this.texture_img["idtkLoadDisposed"] = true;
+		this.texture_img.src = this.texture_file;
+		this.runtime.waitForImageLoad(this.texture_img);
+		this.webGL_texture = null;
+	};
+	typeProto.onLostWebGLContext = function ()
+	{
+		if (this.is_family)
+			return;
+		this.webGL_texture = null;
+	};
+	typeProto.onRestoreWebGLContext = function ()
+	{
+		if (this.is_family || !this.instances.length)
+			return;
+		if (!this.webGL_texture)
+		{
+			this.webGL_texture = this.runtime.glwrap.loadTexture(this.texture_img, false, this.runtime.linearSampling, this.texture_pixelformat);
+		}
+		var i, len;
+		for (i = 0, len = this.instances.length; i < len; i++)
+			this.instances[i].webGL_texture = this.webGL_texture;
+	};
+	typeProto.unloadTextures = function ()
+	{
+		if (this.is_family || this.instances.length || !this.webGL_texture)
+			return;
+		this.runtime.glwrap.deleteTexture(this.webGL_texture);
+		this.webGL_texture = null;
+	};
+	typeProto.preloadCanvas2D = function (ctx)
+	{
+		ctx.drawImage(this.texture_img, 0, 0);
+	};
+	pluginProto.Instance = function(type)
+	{
+		this.type = type;
+		this.runtime = type.runtime;
+	};
+	var instanceProto = pluginProto.Instance.prototype;
+	instanceProto.onDestroy = function()
+	{
+		freeAllLines (this.lines);
+		freeAllClip  (this.clipList);
+		freeAllClipUV(this.clipUV);
+		cr.wipe(this.characterWidthList);
+	};
+	instanceProto.onCreate = function()
+	{
+		this.texture_img      = this.type.texture_img;
+		this.characterWidth   = this.properties[0];
+		this.characterHeight  = this.properties[1];
+		this.characterSet     = this.properties[2];
+		this.text             = this.properties[3];
+		this.characterScale   = this.properties[4];
+		this.visible          = (this.properties[5] === 0);	// 0=visible, 1=invisible
+		this.halign           = this.properties[6]/2.0;			// 0=left, 1=center, 2=right
+		this.valign           = this.properties[7]/2.0;			// 0=top, 1=center, 2=bottom
+		this.wrapbyword       = (this.properties[9] === 0);	// 0=word, 1=character
+		this.characterSpacing = this.properties[10];
+		this.lineHeight       = this.properties[11];
+		this.textWidth  = 0;
+		this.textHeight = 0;
+		if (this.recycled)
+		{
+			this.lines.length = 0;
+			cr.wipe(this.clipList);
+			cr.wipe(this.clipUV);
+			cr.wipe(this.characterWidthList);
+		}
+		else
+		{
+			this.lines = [];
+			this.clipList = {};
+			this.clipUV = {};
+			this.characterWidthList = {};
+		}
+		this.text_changed = true;
+		this.lastwrapwidth = this.width;
+		if (this.runtime.glwrap)
+		{
+			if (!this.type.webGL_texture)
+			{
+				this.type.webGL_texture = this.runtime.glwrap.loadTexture(this.type.texture_img, false, this.runtime.linearSampling, this.type.texture_pixelformat);
+			}
+			this.webGL_texture = this.type.webGL_texture;
+		}
+		this.SplitSheet();
+	};
+	instanceProto.saveToJSON = function ()
+	{
+		var save = {
+			"t": this.text,
+			"csc": this.characterScale,
+			"csp": this.characterSpacing,
+			"lh": this.lineHeight,
+			"tw": this.textWidth,
+			"th": this.textHeight,
+			"lrt": this.last_render_tick,
+			"cw": {}
+		};
+		for (var ch in this.characterWidthList)
+			save["cw"][ch] = this.characterWidthList[ch];
+		return save;
+	};
+	instanceProto.loadFromJSON = function (o)
+	{
+		this.text = o["t"];
+		this.characterScale = o["csc"];
+		this.characterSpacing = o["csp"];
+		this.lineHeight = o["lh"];
+		this.textWidth = o["tw"];
+		this.textHeight = o["th"];
+		this.last_render_tick = o["lrt"];
+		for(var ch in o["cw"])
+			this.characterWidthList[ch] = o["cw"][ch];
+		this.text_changed = true;
+		this.lastwrapwidth = this.width;
+	};
+	function trimRight(text)
+	{
+		return text.replace(/\s\s*$/, '');
+	}
+	var MAX_CACHE_SIZE = 1000;
+	function alloc(cache,Constructor)
+	{
+		if (cache.length)
+			return cache.pop();
+		else
+			return new Constructor();
+	}
+	function free(cache,data)
+	{
+		if (cache.length < MAX_CACHE_SIZE)
+		{
+			cache.push(data);
+		}
+	}
+	function freeAll(cache,dataList,isArray)
+	{
+		if (isArray) {
+			var i, len;
+			for (i = 0, len = dataList.length; i < len; i++)
+			{
+				free(cache,dataList[i]);
+			}
+			dataList.length = 0;
+		} else {
+			var prop;
+			for(prop in dataList) {
+				if(Object.prototype.hasOwnProperty.call(dataList,prop)) {
+					free(cache,dataList[prop]);
+					delete dataList[prop];
+				}
+			}
+		}
+	}
+	function addLine(inst,lineIndex,cur_line) {
+		var lines = inst.lines;
+		var line;
+		cur_line = trimRight(cur_line);
+		if (lineIndex >= lines.length)
+			lines.push(allocLine());
+		line = lines[lineIndex];
+		line.text = cur_line;
+		line.width = inst.measureWidth(cur_line);
+		inst.textWidth = cr.max(inst.textWidth,line.width);
+	}
+	var linesCache = [];
+	function allocLine()       { return alloc(linesCache,Object); }
+	function freeLine(l)       { free(linesCache,l); }
+	function freeAllLines(arr) { freeAll(linesCache,arr,true); }
+	function addClip(obj,property,x,y,w,h) {
+		if (obj[property] === undefined) {
+			obj[property] = alloc(clipCache,Object);
+		}
+		obj[property].x = x;
+		obj[property].y = y;
+		obj[property].w = w;
+		obj[property].h = h;
+	}
+	var clipCache = [];
+	function allocClip()      { return alloc(clipCache,Object); }
+	function freeAllClip(obj) { freeAll(clipCache,obj,false);}
+	function addClipUV(obj,property,left,top,right,bottom) {
+		if (obj[property] === undefined) {
+			obj[property] = alloc(clipUVCache,cr.rect);
+		}
+		obj[property].left   = left;
+		obj[property].top    = top;
+		obj[property].right  = right;
+		obj[property].bottom = bottom;
+	}
+	var clipUVCache = [];
+	function allocClipUV()      { return alloc(clipUVCache,cr.rect);}
+	function freeAllClipUV(obj) { freeAll(clipUVCache,obj,false);}
+	instanceProto.SplitSheet = function() {
+		var texture      = this.texture_img;
+		var texWidth     = texture.width;
+		var texHeight    = texture.height;
+		var charWidth    = this.characterWidth;
+		var charHeight   = this.characterHeight;
+		var charU        = charWidth /texWidth;
+		var charV        = charHeight/texHeight;
+		var charSet      = this.characterSet ;
+		var cols = Math.floor(texWidth/charWidth);
+		var rows = Math.floor(texHeight/charHeight);
+		for ( var c = 0; c < charSet.length; c++) {
+			if  (c >= cols * rows) break;
+			var x = c%cols;
+			var y = Math.floor(c/cols);
+			var letter = charSet.charAt(c);
+			if (this.runtime.glwrap) {
+				addClipUV(
+					this.clipUV, letter,
+					x * charU ,
+					y * charV ,
+					(x+1) * charU ,
+					(y+1) * charV
+				);
+			} else {
+				addClip(
+					this.clipList, letter,
+					x * charWidth,
+					y * charHeight,
+					charWidth,
+					charHeight
+				);
+			}
+		}
+	};
+	/*
+     *	Word-Wrapping
+     */
+	var wordsCache = [];
+	pluginProto.TokeniseWords = function (text)
+	{
+		wordsCache.length = 0;
+		var cur_word = "";
+		var ch;
+		var i = 0;
+		while (i < text.length)
+		{
+			ch = text.charAt(i);
+			if (ch === "\n")
+			{
+				if (cur_word.length)
+				{
+					wordsCache.push(cur_word);
+					cur_word = "";
+				}
+				wordsCache.push("\n");
+				++i;
+			}
+			else if (ch === " " || ch === "\t" || ch === "-")
+			{
+				do {
+					cur_word += text.charAt(i);
+					i++;
+				}
+				while (i < text.length && (text.charAt(i) === " " || text.charAt(i) === "\t"));
+				wordsCache.push(cur_word);
+				cur_word = "";
+			}
+			else if (i < text.length)
+			{
+				cur_word += ch;
+				i++;
+			}
+		}
+		if (cur_word.length)
+			wordsCache.push(cur_word);
+	};
+	pluginProto.WordWrap = function (inst)
+	{
+		var text = inst.text;
+		var lines = inst.lines;
+		if (!text || !text.length)
+		{
+			freeAllLines(lines);
+			return;
+		}
+		var width = inst.width;
+		if (width <= 2.0)
+		{
+			freeAllLines(lines);
+			return;
+		}
+		var charWidth = inst.characterWidth;
+		var charScale = inst.characterScale;
+		var charSpacing = inst.characterSpacing;
+		if ( (text.length * (charWidth * charScale + charSpacing) - charSpacing) <= width && text.indexOf("\n") === -1)
+		{
+			var all_width = inst.measureWidth(text);
+			if (all_width <= width)
+			{
+				freeAllLines(lines);
+				lines.push(allocLine());
+				lines[0].text = text;
+				lines[0].width = all_width;
+				inst.textWidth  = all_width;
+				inst.textHeight = inst.characterHeight * charScale + inst.lineHeight;
+				return;
+			}
+		}
+		var wrapbyword = inst.wrapbyword;
+		this.WrapText(inst);
+		inst.textHeight = lines.length * (inst.characterHeight * charScale + inst.lineHeight);
+	};
+	pluginProto.WrapText = function (inst)
+	{
+		var wrapbyword = inst.wrapbyword;
+		var text       = inst.text;
+		var lines      = inst.lines;
+		var width      = inst.width;
+		var wordArray;
+		if (wrapbyword) {
+			this.TokeniseWords(text);	// writes to wordsCache
+			wordArray = wordsCache;
+		} else {
+			wordArray = text;
+		}
+		var cur_line = "";
+		var prev_line;
+		var line_width;
+		var i;
+		var lineIndex = 0;
+		var line;
+		var ignore_newline = false;
+		for (i = 0; i < wordArray.length; i++)
+		{
+			if (wordArray[i] === "\n")
+			{
+				if (ignore_newline === true) {
+					ignore_newline = false;
+				} else {
+					addLine(inst,lineIndex,cur_line);
+					lineIndex++;
+				}
+				cur_line = "";
+				continue;
+			}
+			ignore_newline = false;
+			prev_line = cur_line;
+			cur_line += wordArray[i];
+			line_width = inst.measureWidth(trimRight(cur_line));
+			if (line_width > width)
+			{
+				if (prev_line === "") {
+					addLine(inst,lineIndex,cur_line);
+					cur_line = "";
+					ignore_newline = true;
+				} else {
+					addLine(inst,lineIndex,prev_line);
+					cur_line = wordArray[i];
+				}
+				lineIndex++;
+				if (!wrapbyword && cur_line === " ")
+					cur_line = "";
+			}
+		}
+		if (trimRight(cur_line).length)
+		{
+			addLine(inst,lineIndex,cur_line);
+			lineIndex++;
+		}
+		for (i = lineIndex; i < lines.length; i++)
+			freeLine(lines[i]);
+		lines.length = lineIndex;
+	};
+	instanceProto.measureWidth = function(text) {
+		var spacing = this.characterSpacing;
+		var len     = text.length;
+		var width   = 0;
+		for (var i = 0; i < len; i++) {
+			width += this.getCharacterWidth(text.charAt(i)) * this.characterScale + spacing;
+		}
+		width -= (width > 0) ? spacing : 0;
+		return width;
+	};
+	/***/
+	instanceProto.getCharacterWidth = function(character) {
+		var widthList = this.characterWidthList;
+		if (widthList[character] !== undefined) {
+			return widthList[character];
+		} else {
+			return this.characterWidth;
+		}
+	};
+	instanceProto.rebuildText = function() {
+		if (this.text_changed || this.width !== this.lastwrapwidth) {
+			this.textWidth = 0;
+			this.textHeight = 0;
+			this.type.plugin.WordWrap(this);
+			this.text_changed = false;
+			this.lastwrapwidth = this.width;
+		}
+	};
+	var EPSILON = 0.00001;
+	instanceProto.draw = function(ctx, glmode)
+	{
+		var texture = this.texture_img;
+		if (this.text !== "" && texture != null) {
+			this.rebuildText();
+			if (this.height < this.characterHeight*this.characterScale + this.lineHeight) {
+				return;
+			}
+			ctx.globalAlpha = this.opacity;
+			var myx = this.x;
+			var myy = this.y;
+			if (this.runtime.pixel_rounding)
+			{
+				myx = Math.round(myx);
+				myy = Math.round(myy);
+			}
+			var viewLeft = this.layer.viewLeft;
+			var viewTop = this.layer.viewTop;
+			var viewRight = this.layer.viewRight;
+			var viewBottom = this.layer.viewBottom;
+			ctx.save();
+			ctx.translate(myx, myy);
+			ctx.rotate(this.angle);
+			var ha         = this.halign;
+			var va         = this.valign;
+			var scale      = this.characterScale;
+			var charHeight = this.characterHeight * scale;
+			var lineHeight = this.lineHeight;
+			var charSpace  = this.characterSpacing;
+			var lines = this.lines;
+			var textHeight = this.textHeight;
+			var letterWidth;
+			var halign;
+			var valign = va * cr.max(0,(this.height - textHeight));
+			var offx = -(this.hotspotX * this.width);
+			var offy = -(this.hotspotY * this.height);
+			offy += valign;
+			var drawX ;
+			var drawY = offy;
+			var roundX, roundY;
+			for(var i = 0; i < lines.length; i++) {
+				var line = lines[i].text;
+				var len  = lines[i].width;
+				halign = ha * cr.max(0,this.width - len);
+				drawX = offx + halign;
+				drawY += lineHeight;
+				if (myy + drawY + charHeight < viewTop)
+				{
+					drawY += charHeight;
+					continue;
+				}
+				for(var j = 0; j < line.length; j++) {
+					var letter = line.charAt(j);
+					letterWidth = this.getCharacterWidth(letter);
+					var clip = this.clipList[letter];
+					if (myx + drawX + letterWidth * scale + charSpace < viewLeft)
+					{
+						drawX += letterWidth * scale + charSpace;
+						continue;
+					}
+					if ( drawX + letterWidth * scale > this.width + EPSILON ) {
+						break;
+					}
+					if (clip !== undefined) {
+						roundX = drawX;
+						roundY = drawY;
+						if (this.angle === 0)
+						{
+							roundX = Math.round(roundX);
+							roundY = Math.round(roundY);
+						}
+						ctx.drawImage( this.texture_img,
+									 clip.x, clip.y, clip.w, clip.h,
+									 roundX,roundY,clip.w*scale,clip.h*scale);
+					}
+					drawX += letterWidth * scale + charSpace;
+					if (myx + drawX > viewRight)
+						break;
+				}
+				drawY += charHeight;
+				if (drawY + charHeight + lineHeight > this.height || myy + drawY > viewBottom)
+				{
+					break;
+				}
+			}
+			ctx.restore();
+		}
+	};
+	var dQuad = new cr.quad();
+	function rotateQuad(quad,cosa,sina) {
+		var x_temp;
+		x_temp   = (quad.tlx * cosa) - (quad.tly * sina);
+		quad.tly = (quad.tly * cosa) + (quad.tlx * sina);
+		quad.tlx = x_temp;
+		x_temp    = (quad.trx * cosa) - (quad.try_ * sina);
+		quad.try_ = (quad.try_ * cosa) + (quad.trx * sina);
+		quad.trx  = x_temp;
+		x_temp   = (quad.blx * cosa) - (quad.bly * sina);
+		quad.bly = (quad.bly * cosa) + (quad.blx * sina);
+		quad.blx = x_temp;
+		x_temp    = (quad.brx * cosa) - (quad.bry * sina);
+		quad.bry = (quad.bry * cosa) + (quad.brx * sina);
+		quad.brx  = x_temp;
+	}
+	instanceProto.drawGL = function(glw)
+	{
+		glw.setTexture(this.webGL_texture);
+		glw.setOpacity(this.opacity);
+		if (!this.text)
+			return;
+		this.rebuildText();
+		if (this.height < this.characterHeight*this.characterScale + this.lineHeight) {
+			return;
+		}
+		this.update_bbox();
+		var q = this.bquad;
+		var ox = 0;
+		var oy = 0;
+		if (this.runtime.pixel_rounding)
+		{
+			ox = Math.round(this.x) - this.x;
+			oy = Math.round(this.y) - this.y;
+		}
+		var viewLeft = this.layer.viewLeft;
+		var viewTop = this.layer.viewTop;
+		var viewRight = this.layer.viewRight;
+		var viewBottom = this.layer.viewBottom;
+		var angle      = this.angle;
+		var ha         = this.halign;
+		var va         = this.valign;
+		var scale      = this.characterScale;
+		var charHeight = this.characterHeight * scale;   // to precalculate in onCreate or on change
+		var lineHeight = this.lineHeight;
+		var charSpace  = this.characterSpacing;
+		var lines = this.lines;
+		var textHeight = this.textHeight;
+		var letterWidth;
+		var cosa,sina;
+		if (angle !== 0)
+		{
+			cosa = Math.cos(angle);
+			sina = Math.sin(angle);
+		}
+		var halign;
+		var valign = va * cr.max(0,(this.height - textHeight));
+		var offx = q.tlx + ox;
+		var offy = q.tly + oy;
+		var drawX ;
+		var drawY = valign;
+		var roundX, roundY;
+		for(var i = 0; i < lines.length; i++) {
+			var line       = lines[i].text;
+			var lineWidth  = lines[i].width;
+			halign = ha * cr.max(0,this.width - lineWidth);
+			drawX = halign;
+			drawY += lineHeight;
+			if (offy + drawY + charHeight < viewTop)
+			{
+				drawY += charHeight;
+				continue;
+			}
+			for(var j = 0; j < line.length; j++) {
+				var letter = line.charAt(j);
+				letterWidth = this.getCharacterWidth(letter);
+				var clipUV = this.clipUV[letter];
+				if (offx + drawX + letterWidth * scale + charSpace < viewLeft)
+				{
+					drawX += letterWidth * scale + charSpace;
+					continue;
+				}
+				if (drawX + letterWidth * scale > this.width + EPSILON)
+				{
+					break;
+				}
+				if (clipUV !== undefined) {
+					var clipWidth  = this.characterWidth*scale;
+					var clipHeight = this.characterHeight*scale;
+					roundX = drawX;
+					roundY = drawY;
+					if (angle === 0)
+					{
+						roundX = Math.round(roundX);
+						roundY = Math.round(roundY);
+					}
+					dQuad.tlx  = roundX;
+					dQuad.tly  = roundY;
+					dQuad.trx  = roundX + clipWidth;
+					dQuad.try_ = roundY ;
+					dQuad.blx  = roundX;
+					dQuad.bly  = roundY + clipHeight;
+					dQuad.brx  = roundX + clipWidth;
+					dQuad.bry  = roundY + clipHeight;
+					if(angle !== 0)
+					{
+						rotateQuad(dQuad,cosa,sina);
+					}
+					dQuad.offset(offx,offy);
+					glw.quadTex(
+						dQuad.tlx, dQuad.tly,
+						dQuad.trx, dQuad.try_,
+						dQuad.brx, dQuad.bry,
+						dQuad.blx, dQuad.bly,
+						clipUV
+					);
+				}
+				drawX += letterWidth * scale + charSpace;
+				if (offx + drawX > viewRight)
+					break;
+			}
+			drawY += charHeight;
+			if (drawY + charHeight + lineHeight > this.height || offy + drawY > viewBottom)
+			{
+				break;
+			}
+		}
+	};
+	function Cnds() {}
+	Cnds.prototype.CompareText = function(text_to_compare, case_sensitive)
+	{
+		if (case_sensitive)
+			return this.text == text_to_compare;
+		else
+			return cr.equals_nocase(this.text, text_to_compare);
+	};
+	pluginProto.cnds = new Cnds();
+	function Acts() {}
+	Acts.prototype.SetText = function(param)
+	{
+		if (cr.is_number(param) && param < 1e9)
+			param = Math.round(param * 1e10) / 1e10;	// round to nearest ten billionth - hides floating point errors
+		var text_to_set = param.toString();
+		if (this.text !== text_to_set)
+		{
+			this.text = text_to_set;
+			this.text_changed = true;
+			this.runtime.redraw = true;
+		}
+	};
+	Acts.prototype.AppendText = function(param)
+	{
+		if (cr.is_number(param))
+			param = Math.round(param * 1e10) / 1e10;	// round to nearest ten billionth - hides floating point errors
+		var text_to_append = param.toString();
+		if (text_to_append)	// not empty
+		{
+			this.text += text_to_append;
+			this.text_changed = true;
+			this.runtime.redraw = true;
+		}
+	};
+	Acts.prototype.SetScale = function(param)
+	{
+		if (param !== this.characterScale) {
+			this.characterScale = param;
+			this.text_changed = true;
+			this.runtime.redraw = true;
+		}
+	};
+	Acts.prototype.SetCharacterSpacing = function(param)
+	{
+		if (param !== this.CharacterSpacing) {
+			this.characterSpacing = param;
+			this.text_changed = true;
+			this.runtime.redraw = true;
+		}
+	};
+	Acts.prototype.SetLineHeight = function(param)
+	{
+		if (param !== this.lineHeight) {
+			this.lineHeight = param;
+			this.text_changed = true;
+			this.runtime.redraw = true;
+		}
+	};
+	instanceProto.SetCharWidth = function(character,width) {
+		var w = parseInt(width,10);
+		if (this.characterWidthList[character] !== w) {
+			this.characterWidthList[character] = w;
+			this.text_changed = true;
+			this.runtime.redraw = true;
+		}
+	};
+	Acts.prototype.SetCharacterWidth = function(characterSet,width)
+	{
+		if (characterSet !== "") {
+			for(var c = 0; c < characterSet.length; c++) {
+				this.SetCharWidth(characterSet.charAt(c),width);
+			}
+		}
+	};
+	Acts.prototype.SetEffect = function (effect)
+	{
+		this.compositeOp = cr.effectToCompositeOp(effect);
+		cr.setGLBlend(this, effect, this.runtime.gl);
+		this.runtime.redraw = true;
+	};
+	Acts.prototype.SetHAlign = function (a)
+	{
+		this.halign = a / 2.0;
+		this.text_changed = true;
+		this.runtime.redraw = true;
+	};
+	Acts.prototype.SetVAlign = function (a)
+	{
+		this.valign = a / 2.0;
+		this.text_changed = true;
+		this.runtime.redraw = true;
+	};
+	pluginProto.acts = new Acts();
+	function Exps() {}
+	Exps.prototype.CharacterWidth = function(ret,character)
+	{
+		ret.set_int(this.getCharacterWidth(character));
+	};
+	Exps.prototype.CharacterHeight = function(ret)
+	{
+		ret.set_int(this.characterHeight);
+	};
+	Exps.prototype.CharacterScale = function(ret)
+	{
+		ret.set_float(this.characterScale);
+	};
+	Exps.prototype.CharacterSpacing = function(ret)
+	{
+		ret.set_int(this.characterSpacing);
+	};
+	Exps.prototype.LineHeight = function(ret)
+	{
+		ret.set_int(this.lineHeight);
+	};
+	Exps.prototype.Text = function(ret)
+	{
+		ret.set_string(this.text);
+	};
+	Exps.prototype.TextWidth = function (ret)
+	{
+		this.rebuildText();
+		ret.set_float(this.textWidth);
+	};
+	Exps.prototype.TextHeight = function (ret)
+	{
+		this.rebuildText();
+		ret.set_float(this.textHeight);
 	};
 	pluginProto.exps = new Exps();
 }());
@@ -19426,6 +20474,18 @@ cr.getProjectModel = function() { return [
 	null,
 	[
 	[
+		cr.plugins_.Button,
+		false,
+		true,
+		true,
+		true,
+		false,
+		false,
+		false,
+		false,
+		false
+	]
+,	[
 		cr.plugins_.Audio,
 		true,
 		false,
@@ -19472,6 +20532,18 @@ cr.getProjectModel = function() { return [
 		true,
 		true,
 		false
+	]
+,	[
+		cr.plugins_.Spritefont2,
+		false,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true
 	]
 ,	[
 		cr.plugins_.Text,
@@ -19550,7 +20622,7 @@ cr.getProjectModel = function() { return [
 		"t2",
 		cr.plugins_.Sprite,
 		false,
-		[],
+		[9358667337268641],
 		3,
 		0,
 		null,
@@ -20039,6 +21111,231 @@ cr.getProjectModel = function() { return [
 		[],
 		null
 	]
+,	[
+		"t18",
+		cr.plugins_.Text,
+		false,
+		[],
+		1,
+		0,
+		null,
+		null,
+		[
+		[
+			"Fade",
+			cr.behaviors.Fade,
+			950983924179876
+		]
+		],
+		false,
+		false,
+		2359816887254563,
+		[],
+		null
+	]
+,	[
+		"t19",
+		cr.plugins_.Text,
+		false,
+		[],
+		1,
+		0,
+		null,
+		null,
+		[
+		[
+			"Fade",
+			cr.behaviors.Fade,
+			1332534536406305
+		]
+		],
+		false,
+		false,
+		5109984531548453,
+		[],
+		null
+	]
+,	[
+		"t20",
+		cr.plugins_.Text,
+		false,
+		[],
+		1,
+		0,
+		null,
+		null,
+		[
+		[
+			"Fade",
+			cr.behaviors.Fade,
+			905677360486248
+		]
+		],
+		false,
+		false,
+		3366784911873763,
+		[],
+		null
+	]
+,	[
+		"t21",
+		cr.plugins_.Text,
+		false,
+		[],
+		0,
+		0,
+		null,
+		null,
+		[
+		],
+		false,
+		false,
+		5219814525249716,
+		[],
+		null
+	]
+,	[
+		"t22",
+		cr.plugins_.Text,
+		false,
+		[],
+		1,
+		0,
+		null,
+		null,
+		[
+		[
+			"Fade",
+			cr.behaviors.Fade,
+			9259568958139258
+		]
+		],
+		false,
+		false,
+		2459464884593201,
+		[],
+		null
+	]
+,	[
+		"t23",
+		cr.plugins_.Text,
+		false,
+		[],
+		1,
+		0,
+		null,
+		null,
+		[
+		[
+			"Fade",
+			cr.behaviors.Fade,
+			7020094335029657
+		]
+		],
+		false,
+		false,
+		1301913627052515,
+		[],
+		null
+	]
+,	[
+		"t24",
+		cr.plugins_.Spritefont2,
+		false,
+		[],
+		0,
+		0,
+		["images/spritefont.png", 147, 0],
+		null,
+		[
+		],
+		false,
+		false,
+		6725635397377973,
+		[],
+		null
+	]
+,	[
+		"t25",
+		cr.plugins_.Sprite,
+		false,
+		[],
+		0,
+		0,
+		null,
+		[
+			[
+			"Default",
+			5,
+			false,
+			1,
+			0,
+			false,
+			5741420988321281,
+			[
+				["images/win-sheet0.png", 2661, 0, 0, 250, 250, 1, 0.5, 0.5,[],[],0]
+			]
+			]
+		],
+		[
+		],
+		false,
+		false,
+		3612841051949924,
+		[],
+		null
+	]
+,	[
+		"t26",
+		cr.plugins_.Text,
+		false,
+		[],
+		0,
+		0,
+		null,
+		null,
+		[
+		],
+		false,
+		false,
+		5832626638363313,
+		[],
+		null
+	]
+,	[
+		"t27",
+		cr.plugins_.Text,
+		false,
+		[],
+		0,
+		0,
+		null,
+		null,
+		[
+		],
+		false,
+		false,
+		1186725672385557,
+		[],
+		null
+	]
+,	[
+		"t28",
+		cr.plugins_.Button,
+		false,
+		[],
+		0,
+		0,
+		null,
+		null,
+		[
+		],
+		false,
+		false,
+		4071942309300846,
+		[],
+		null
+	]
 	],
 	[
 	],
@@ -20083,133 +21380,14 @@ cr.getProjectModel = function() { return [
 			[			]
 		]
 ,		[
-			"main",
-			1,
-			7958867531685775,
-			true,
-			[255, 255, 255],
-			true,
-			1,
-			1,
-			1,
-			false,
-			1,
-			0,
-			0,
-			[
-			[
-				[1740, 1625, 0, 250, 250, 0, 0, 1, 0.5, 0.5, 0, 0, []],
-				2,
-				1,
-				[
-				],
-				[
-				[
-					250,
-					800,
-					600,
-					3,
-					3,
-					1,
-					1
-				],
-				[
-					1
-				],
-				[
-					1
-				]
-				],
-				[
-					0,
-					"Default",
-					0,
-					1
-				]
-			]
-,			[
-				[3710, 2455, 0, 84, 61, 0, 0, 1, 0.4285714328289032, 0.5737704634666443, 0, 0, []],
-				3,
-				2,
-				[
-				],
-				[
-				[
-					600,
-					0,
-					0,
-					0,
-					1,
-					1
-				],
-				[
-				]
-				],
-				[
-					0,
-					"Default",
-					0,
-					1
-				]
-			]
-,			[
-				[3740, 1585, 0, 250, 250, 0, 0, 1, 0.5, 0.5, 0, 0, []],
-				4,
-				5,
-				[
-					[5]
-				],
-				[
-				[
-					120,
-					0,
-					0,
-					0,
-					1,
-					1
-				]
-				],
-				[
-					0,
-					"Default",
-					0,
-					1
-				]
-			]
-,			[
-				[3890, 3326, 0, 250, 250, 0, 0, 1, 0.5, 0.5, 0, 0, []],
-				8,
-				10,
-				[
-				],
-				[
-				[
-					1,
-					0,
-					0,
-					1,
-					1
-				]
-				],
-				[
-					0,
-					"Default",
-					0,
-					1
-				]
-			]
-			],
-			[			]
-		]
-,		[
 			"pika",
-			2,
+			1,
 			1877822827256847,
 			true,
 			[255, 255, 255],
 			true,
-			0,
-			0,
+			1,
+			1,
 			1,
 			false,
 			1,
@@ -20217,26 +21395,6 @@ cr.getProjectModel = function() { return [
 			0,
 			[
 			[
-				[27, 29, 0, 300, 50, 0, -0.01679272577166557, 1, 0, 0, 0, 0, []],
-				9,
-				11,
-				[
-				],
-				[
-				],
-				[
-					"Text",
-					0,
-					"bold 20pt Arial",
-					"rgb(255,51,0)",
-					0,
-					0,
-					0,
-					0,
-					0
-				]
-			]
-,			[
 				[3805, 475, 0, 400, 400, 0, 0, 1, 0.5, 0.5, 0, 0, []],
 				10,
 				22,
@@ -20311,7 +21469,7 @@ cr.getProjectModel = function() { return [
 				],
 				[
 				[
-					100,
+					120,
 					0,
 					0,
 					0,
@@ -20338,8 +21496,110 @@ cr.getProjectModel = function() { return [
 				[
 				],
 				[
-					350,
+					240,
 					0,
+					0,
+					0,
+					1,
+					1
+				]
+				],
+				[
+					0,
+					"Default",
+					0,
+					1
+				]
+			]
+,			[
+				[1775, 1680, 0, 250, 250, 0, 0, 1, 0.5, 0.5, 0, 0, []],
+				2,
+				1,
+				[
+					[3]
+				],
+				[
+				[
+					250,
+					800,
+					600,
+					3,
+					3,
+					1,
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+				],
+				[
+					0,
+					"Default",
+					0,
+					1
+				]
+			]
+,			[
+				[3705, 1621, 0, 250, 250, 0, 0, 1, 0.5, 0.5, 0, 0, []],
+				4,
+				5,
+				[
+					[5]
+				],
+				[
+				[
+					120,
+					0,
+					0,
+					0,
+					1,
+					1
+				]
+				],
+				[
+					0,
+					"Default",
+					0,
+					1
+				]
+			]
+,			[
+				[3745, 2361, 0, 84, 61, 0, 0, 1, 0.4285714328289032, 0.5737704634666443, 0, 0, []],
+				3,
+				2,
+				[
+				],
+				[
+				[
+					600,
+					0,
+					0,
+					0,
+					1,
+					1
+				],
+				[
+				]
+				],
+				[
+					0,
+					"Default",
+					0,
+					1
+				]
+			]
+,			[
+				[3785, 3172, 0, 250, 250, 0, 0, 1, 0.5, 0.5, 0, 0, []],
+				8,
+				10,
+				[
+				],
+				[
+				[
+					1,
 					0,
 					0,
 					1,
@@ -20358,7 +21618,7 @@ cr.getProjectModel = function() { return [
 		]
 ,		[
 			"Layer 0",
-			3,
+			2,
 			6246387212789314,
 			false,
 			[0, 0, 0],
@@ -20388,6 +21648,319 @@ cr.getProjectModel = function() { return [
 					0,
 					0,
 					0,
+					0
+				]
+			]
+,			[
+				[1644, 1128.599975585938, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				18,
+				12,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					7,
+					1
+				]
+				],
+				[
+					"Directions",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[1641, 1157.599975585938, 0, 200, 34, 0, -0.006074281875044107, 1, 0, 0, 0, 0, []],
+				19,
+				14,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					1,
+					1
+				]
+				],
+				[
+					"Arrow keys to move",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[1637, 1181.599975585938, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				20,
+				15,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					1,
+					1
+				]
+				],
+				[
+					"left click to shoot",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[1607, 1084.599975585938, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				21,
+				16,
+				[
+				],
+				[
+				],
+				[
+					"capture all pokemon",
+					0,
+					"12pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[1621, 1207.599975585938, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				22,
+				17,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					1,
+					1
+				]
+				],
+				[
+					"capture all pokemon!",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+			],
+			[			]
+		]
+,		[
+			"directions",
+			3,
+			9236198216599983,
+			true,
+			[255, 255, 255],
+			true,
+			0,
+			0,
+			1,
+			false,
+			1,
+			0,
+			0,
+			[
+			[
+				[381, 194.5999755859375, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				18,
+				18,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					7,
+					1
+				]
+				],
+				[
+					"Directions",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[378, 223.5999755859375, 0, 200, 34, 0, -0.006074281875044107, 1, 0, 0, 0, 0, []],
+				19,
+				19,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					7,
+					1
+				]
+				],
+				[
+					"Arrow keys to move",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[374, 247.5999755859375, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				20,
+				20,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					7,
+					1
+				]
+				],
+				[
+					"left click to shoot",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[358, 273.5999755859375, 0, 200, 30, 0, 0, 1, 0, 0, 0, 0, []],
+				22,
+				24,
+				[
+				],
+				[
+				[
+					1,
+					0,
+					0,
+					7,
+					1
+				]
+				],
+				[
+					"capture all pokemon!",
+					0,
+					"16pt Arial",
+					"rgb(0,0,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[22, 23, 0, 300, 50, 0, -0.01679272577166557, 1, 0, 0, 0, 0, []],
+				9,
+				11,
+				[
+				],
+				[
+				],
+				[
+					"Text",
+					0,
+					"bold 20pt Arial",
+					"rgb(255,51,0)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[452, 322, 0, 222, 69, 0, 0, 1, 0, 0, 0, 0, []],
+				27,
+				21,
+				[
+				],
+				[
+				],
+				[
+					"You won! you are the champion!!",
+					1,
+					"20pt Arial",
+					"rgb(0,153,255)",
+					0,
+					0,
+					0,
+					0,
+					0
+				]
+			]
+,			[
+				[758, 582, 0, 366, 276, 0, 0, 1, 0, 0, 0, 0, []],
+				28,
+				25,
+				[
+				],
+				[
+				],
+				[
+					0,
+					"Restart",
+					"",
+					1,
+					1,
+					1,
+					"",
 					0
 				]
 			]
@@ -21769,59 +23342,6 @@ false,false,5925217890185716,false
 			[
 			[
 				-1,
-				cr.system_object.prototype.acts.GoToLayout,
-				null,
-				8784924525003005,
-				false
-				,[
-				[
-					6,
-					"Layout 1"
-				]
-				]
-			]
-,			[
-				-1,
-				cr.system_object.prototype.acts.SetVar,
-				null,
-				3125566154077195,
-				false
-				,[
-				[
-					11,
-					"fookTime"
-				]
-,				[
-					7,
-					[
-						0,
-						0
-					]
-				]
-				]
-			]
-,			[
-				-1,
-				cr.system_object.prototype.acts.SetVar,
-				null,
-				3377514273880713,
-				false
-				,[
-				[
-					11,
-					"PikasCaptured"
-				]
-,				[
-					7,
-					[
-						0,
-						0
-					]
-				]
-				]
-			]
-,			[
-				-1,
 				cr.system_object.prototype.acts.SetLayerVisible,
 				null,
 				9332413764280802,
@@ -21831,12 +23351,48 @@ false,false,5925217890185716,false
 					5,
 					[
 						0,
-						3
+						2
 					]
 				]
 ,				[
 					3,
 					1
+				]
+				]
+			]
+,			[
+				28,
+				cr.plugins_.Button.prototype.acts.SetVisible,
+				null,
+				9281841014365173,
+				false
+				,[
+				[
+					3,
+					1
+				]
+				]
+			]
+,			[
+				28,
+				cr.plugins_.Button.prototype.acts.SetCSSStyle,
+				null,
+				2135800455647558,
+				false
+				,[
+				[
+					1,
+					[
+						2,
+						"background-color"
+					]
+				]
+,				[
+					1,
+					[
+						2,
+						"red"
+					]
 				]
 				]
 			]
@@ -21923,7 +23479,35 @@ false,false,5925217890185716,false
 				false,
 				false,
 				false,
-				2015361954811742,
+				419264670496405,
+				false
+				,[
+				[
+					11,
+					"fookTime"
+				]
+,				[
+					8,
+					3
+				]
+,				[
+					7,
+					[
+						1,
+						310
+					]
+				]
+				]
+			]
+,			[
+				-1,
+				cr.system_object.prototype.cnds.CompareVar,
+				null,
+				0,
+				false,
+				false,
+				false,
+				5338887758716998,
 				false
 				,[
 				[
@@ -22016,6 +23600,43 @@ false,false,5925217890185716,false
 				]
 			]
 			]
+			,[
+			[
+				0,
+				null,
+				false,
+				null,
+				3249286287785479,
+				[
+				[
+					-1,
+					cr.system_object.prototype.cnds.ForEach,
+					null,
+					0,
+					true,
+					false,
+					false,
+					9280645383656663,
+					false
+					,[
+					[
+						4,
+						4
+					]
+					]
+				]
+				],
+				[
+				[
+					4,
+					cr.plugins_.Sprite.prototype.acts.Destroy,
+					null,
+					2903498606751339,
+					false
+				]
+				]
+			]
+			]
 		]
 ,		[
 			0,
@@ -22087,10 +23708,23 @@ false,false,5925217890185716,false
 			]
 ,			[
 				2,
-				cr.plugins_.Sprite.prototype.acts.Destroy,
+				cr.plugins_.Sprite.prototype.acts.SubInstanceVar,
 				null,
 				8016069505271651,
 				false
+				,[
+				[
+					10,
+					0
+				]
+,				[
+					7,
+					[
+						0,
+						1
+					]
+				]
+				]
 			]
 			]
 		]
@@ -22264,40 +23898,29 @@ false,false,5925217890185716,false
 				]
 				]
 			]
-			]
-			,[
-			[
-				0,
+,			[
+				27,
+				cr.plugins_.Text.prototype.acts.SetVisible,
 				null,
-				false,
-				null,
-				7798340854603447,
+				4432632822311044,
+				false
+				,[
 				[
-				[
-					-1,
-					cr.system_object.prototype.cnds.ForEach,
-					null,
-					0,
-					true,
-					false,
-					false,
-					9503693311802446,
-					false
-					,[
-					[
-						4,
-						4
-					]
-					]
+					3,
+					1
 				]
-				],
+				]
+			]
+,			[
+				28,
+				cr.plugins_.Button.prototype.acts.SetVisible,
+				null,
+				8832803446778726,
+				false
+				,[
 				[
-				[
-					4,
-					cr.plugins_.Sprite.prototype.acts.Destroy,
-					null,
-					2903498606751339,
-					false
+					3,
+					1
 				]
 				]
 			]
@@ -22361,29 +23984,26 @@ false,false,5925217890185716,false
 			]
 ,			[
 				16,
-				cr.plugins_.Sprite.prototype.acts.SetTowardPosition,
+				cr.plugins_.Sprite.prototype.acts.SetAngle,
 				null,
-				9052786337462022,
+				8809824000471342,
 				false
 				,[
 				[
 					0,
 					[
-						20,
-						2,
-						cr.plugins_.Sprite.prototype.exps.X,
-						false,
-						null
-					]
-				]
-,				[
-					0,
-					[
-						20,
-						2,
-						cr.plugins_.Sprite.prototype.exps.Y,
-						false,
-						null
+						19,
+						cr.system_object.prototype.exps.random
+						,[
+[
+							0,
+							0
+						]
+,[
+							0,
+							360
+						]
+						]
 					]
 				]
 				]
@@ -22420,7 +24040,7 @@ false,false,5925217890185716,false
 					7,
 					[
 						1,
-						290
+						280
 					]
 				]
 				]
@@ -22433,22 +24053,22 @@ false,false,5925217890185716,false
 				false,
 				false,
 				false,
-				2207746226410427,
+				701258438234997,
 				false
 				,[
 				[
 					11,
-					"pikaSpawn"
+					"fookTime"
 				]
 ,				[
 					8,
-					0
+					3
 				]
 ,				[
 					7,
 					[
-						0,
-						1
+						1,
+						290
 					]
 				]
 				]
@@ -22504,6 +24124,176 @@ false,false,5925217890185716,false
 			]
 			]
 		]
+,		[
+			0,
+			null,
+			false,
+			null,
+			5967308514735969,
+			[
+			[
+				15,
+				cr.plugins_.Sprite.prototype.cnds.OnDestroyed,
+				null,
+				1,
+				false,
+				false,
+				false,
+				8595726151959219,
+				false
+			]
+			],
+			[
+			]
+			,[
+			[
+				0,
+				null,
+				false,
+				null,
+				722728159560077,
+				[
+				[
+					-1,
+					cr.system_object.prototype.cnds.ForEach,
+					null,
+					0,
+					true,
+					false,
+					false,
+					1507887001479123,
+					false
+					,[
+					[
+						4,
+						16
+					]
+					]
+				]
+				],
+				[
+				[
+					16,
+					cr.plugins_.Sprite.prototype.acts.Destroy,
+					null,
+					3509626581007213,
+					false
+				]
+				]
+			]
+			]
+		]
+,		[
+			0,
+			null,
+			false,
+			null,
+			2579188179251909,
+			[
+			[
+				6,
+				cr.plugins_.Keyboard.prototype.cnds.IsKeyDown,
+				null,
+				0,
+				false,
+				false,
+				false,
+				1451362172301134,
+				false
+				,[
+				[
+					9,
+					65
+				]
+				]
+			]
+,			[
+				6,
+				cr.plugins_.Keyboard.prototype.cnds.IsKeyDown,
+				null,
+				0,
+				false,
+				false,
+				false,
+				3463443427454827,
+				false
+				,[
+				[
+					9,
+					82
+				]
+				]
+			]
+,			[
+				6,
+				cr.plugins_.Keyboard.prototype.cnds.IsKeyDown,
+				null,
+				0,
+				false,
+				false,
+				false,
+				1472840030541081,
+				false
+				,[
+				[
+					9,
+					75
+				]
+				]
+			]
+			],
+			[
+			[
+				-1,
+				cr.system_object.prototype.acts.SetVar,
+				null,
+				2401346596898575,
+				false
+				,[
+				[
+					11,
+					"fookTime"
+				]
+,				[
+					7,
+					[
+						1,
+						275
+					]
+				]
+				]
+			]
+			]
+		]
+,		[
+			0,
+			null,
+			false,
+			null,
+			6198701195327109,
+			[
+			[
+				28,
+				cr.plugins_.Button.prototype.cnds.OnClicked,
+				null,
+				1,
+				false,
+				false,
+				false,
+				9736399343349309,
+				false
+			]
+			],
+			[
+			[
+				-1,
+				cr.system_object.prototype.acts.RestartLayout,
+				null,
+				7305213332381077,
+				false
+			]
+			]
+		]
 		]
 	]
 	],
@@ -22524,7 +24314,7 @@ false,false,5925217890185716,false
 	false,
 	0,
 	0,
-	24,
+	26,
 	false,
 	true,
 	1,
