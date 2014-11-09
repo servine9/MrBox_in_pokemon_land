@@ -21910,7 +21910,7 @@ false,false,5925217890185716,false
 					7,
 					[
 						1,
-						120
+						300
 					]
 				]
 				]
@@ -22265,6 +22265,43 @@ false,false,5925217890185716,false
 				]
 			]
 			]
+			,[
+			[
+				0,
+				null,
+				false,
+				null,
+				7798340854603447,
+				[
+				[
+					-1,
+					cr.system_object.prototype.cnds.ForEach,
+					null,
+					0,
+					true,
+					false,
+					false,
+					9503693311802446,
+					false
+					,[
+					[
+						4,
+						4
+					]
+					]
+				]
+				],
+				[
+				[
+					4,
+					cr.plugins_.Sprite.prototype.acts.Destroy,
+					null,
+					2903498606751339,
+					false
+				]
+				]
+			]
+			]
 		]
 ,		[
 			0,
@@ -22383,7 +22420,7 @@ false,false,5925217890185716,false
 					7,
 					[
 						1,
-						110
+						290
 					]
 				]
 				]
