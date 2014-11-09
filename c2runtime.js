@@ -16853,7 +16853,7 @@ cr.getProjectModel = function() { return [
 		cr.plugins_.Sprite,
 		false,
 		[3067085601171736],
-		1,
+		2,
 		0,
 		null,
 		[
@@ -16866,7 +16866,7 @@ cr.getProjectModel = function() { return [
 			false,
 			8061654262631144,
 			[
-				["images/chawazawd-sheet0.png", 15383, 0, 0, 250, 250, 1, 0.5, 0.5,[],[],0]
+				["images/chawazawd-sheet0.png", 14762, 0, 0, 250, 250, 1, 0.5, 0.5,[],[-0.5,0.5,-0.5,-0.5,0.5,-0.5,0.5,0.5],0]
 			]
 			]
 		],
@@ -16875,6 +16875,11 @@ cr.getProjectModel = function() { return [
 			"Bullet",
 			cr.behaviors.Bullet,
 			5062622450145828
+		]
+,		[
+			"DestroyOutsideLayout",
+			cr.behaviors.destroy,
+			6386124384239807
 		]
 		],
 		false,
@@ -16901,7 +16906,7 @@ cr.getProjectModel = function() { return [
 			false,
 			8398256340077483,
 			[
-				["images/masterball-sheet0.png", 14284, 0, 0, 250, 250, 1, 0.5, 0.5,[],[],0]
+				["images/mastercapture-sheet0.png", 14284, 0, 0, 250, 250, 1, 0.5, 0.5,[],[],0]
 			]
 			]
 		],
@@ -16910,6 +16915,46 @@ cr.getProjectModel = function() { return [
 		false,
 		false,
 		6424444398760252,
+		[],
+		null
+	]
+,	[
+		"t12",
+		cr.plugins_.Sprite,
+		false,
+		[],
+		2,
+		0,
+		null,
+		[
+			[
+			"Default",
+			5,
+			false,
+			1,
+			0,
+			false,
+			434465216022298,
+			[
+				["images/masterball-sheet0.png", 3464, 0, 0, 77, 72, 1, 0.4675324559211731, 0.4861111044883728,[],[],0]
+			]
+			]
+		],
+		[
+		[
+			"DestroyOutsideLayout",
+			cr.behaviors.destroy,
+			3023861449297878
+		]
+,		[
+			"Bullet",
+			cr.behaviors.Bullet,
+			8597156874604948
+		]
+		],
+		false,
+		false,
+		1019562918197066,
 		[],
 		null
 	]
@@ -16979,9 +17024,9 @@ cr.getProjectModel = function() { return [
 				],
 				[
 				[
-					200,
+					250,
+					800,
 					600,
-					500,
 					3,
 					3,
 					1,
@@ -17115,16 +17160,18 @@ cr.getProjectModel = function() { return [
 				10,
 				22,
 				[
-					[15]
+					[20]
 				],
 				[
 				[
-					180,
+					210,
 					0,
 					0,
 					0,
 					1,
 					1
+				],
+				[
 				]
 				],
 				[
@@ -17141,6 +17188,31 @@ cr.getProjectModel = function() { return [
 				[
 				],
 				[
+				],
+				[
+					0,
+					"Default",
+					0,
+					1
+				]
+			]
+,			[
+				[3764, 2111, 0, 77, 72, 0, 0, 1, 0.4675324559211731, 0.4861111044883728, 0, 0, []],
+				12,
+				3,
+				[
+				],
+				[
+				[
+				],
+				[
+					400,
+					0,
+					0,
+					0,
+					1,
+					1
+				]
 				],
 				[
 					0,
@@ -17302,29 +17374,108 @@ false,false,5925217890185716,false
 			]
 			],
 			[
+			]
+			,[
 			[
-				2,
-				cr.plugins_.Sprite.prototype.acts.Spawn,
+				0,
 				null,
-				6054743985898326,
-				false
-				,[
+				false,
+				null,
+				5441377766688222,
 				[
-					4,
-					3
-				]
-,				[
-					5,
+				[
+					6,
+					cr.plugins_.Keyboard.prototype.cnds.IsKeyDown,
+					null,
+					0,
+					false,
+					false,
+					false,
+					3842601151882959,
+					false
+					,[
 					[
-						0,
-						1
+						9,
+						77
+					]
 					]
 				]
-,				[
-					7,
+				],
+				[
+				[
+					2,
+					cr.plugins_.Sprite.prototype.acts.Spawn,
+					null,
+					3911794175808652,
+					false
+					,[
 					[
-						0,
-						0
+						4,
+						12
+					]
+,					[
+						5,
+						[
+							0,
+							1
+						]
+					]
+,					[
+						7,
+						[
+							0,
+							0
+						]
+					]
+					]
+				]
+				]
+			]
+,			[
+				0,
+				null,
+				false,
+				null,
+				3321887764632564,
+				[
+				[
+					-1,
+					cr.system_object.prototype.cnds.Else,
+					null,
+					0,
+					false,
+					false,
+					false,
+					5580695218007896,
+					false
+				]
+				],
+				[
+				[
+					2,
+					cr.plugins_.Sprite.prototype.acts.Spawn,
+					null,
+					6054743985898326,
+					false
+					,[
+					[
+						4,
+						3
+					]
+,					[
+						5,
+						[
+							0,
+							1
+						]
+					]
+,					[
+						7,
+						[
+							0,
+							0
+						]
+					]
 					]
 				]
 				]
@@ -17596,7 +17747,7 @@ false,false,5925217890185716,false
 					0,
 					[
 						1,
-						2
+						1
 					]
 				]
 				]
@@ -17886,7 +18037,7 @@ false,false,5925217890185716,false
 				,[
 				[
 					4,
-					11
+					8
 				]
 ,				[
 					5,
@@ -18005,6 +18156,167 @@ false,false,5925217890185716,false
 			]
 			]
 		]
+,		[
+			0,
+			null,
+			false,
+			null,
+			7834265053483502,
+			[
+			[
+				12,
+				cr.plugins_.Sprite.prototype.cnds.OnCollision,
+				null,
+				0,
+				false,
+				false,
+				true,
+				205570359923793,
+				false
+				,[
+				[
+					4,
+					10
+				]
+				]
+			]
+			],
+			[
+			[
+				12,
+				cr.plugins_.Sprite.prototype.acts.Destroy,
+				null,
+				5601664238537305,
+				false
+			]
+,			[
+				10,
+				cr.plugins_.Sprite.prototype.acts.Spawn,
+				null,
+				12043263199858,
+				false
+				,[
+				[
+					4,
+					11
+				]
+,				[
+					5,
+					[
+						0,
+						0
+					]
+				]
+,				[
+					7,
+					[
+						0,
+						0
+					]
+				]
+				]
+			]
+,			[
+				10,
+				cr.plugins_.Sprite.prototype.acts.Destroy,
+				null,
+				857187411036976,
+				false
+			]
+			]
+			,[
+			[
+				0,
+				null,
+				false,
+				null,
+				2014784862428477,
+				[
+				[
+					-1,
+					cr.system_object.prototype.cnds.ForEach,
+					null,
+					0,
+					true,
+					false,
+					false,
+					9705910475890959,
+					false
+					,[
+					[
+						4,
+						4
+					]
+					]
+				]
+				],
+				[
+				[
+					4,
+					cr.plugins_.Sprite.prototype.acts.Destroy,
+					null,
+					3855038486120404,
+					false
+				]
+,				[
+					-1,
+					cr.system_object.prototype.acts.AddVar,
+					null,
+					1989135663882634,
+					false
+					,[
+					[
+						11,
+						"PikasCaptured"
+					]
+,					[
+						7,
+						[
+							0,
+							1
+						]
+					]
+					]
+				]
+				]
+			]
+			]
+		]
+,		[
+			0,
+			null,
+			false,
+			null,
+			9996155819529743,
+			[
+			[
+				2,
+				cr.plugins_.Sprite.prototype.cnds.OnDestroyed,
+				null,
+				1,
+				false,
+				false,
+				false,
+				4719756610084327,
+				false
+			]
+			],
+			[
+			[
+				-1,
+				cr.system_object.prototype.acts.GoToLayout,
+				null,
+				8784924525003005,
+				false
+				,[
+				[
+					6,
+					"Layout 1"
+				]
+				]
+			]
+			]
+		]
 		]
 	]
 	],
@@ -18012,8 +18324,8 @@ false,false,5925217890185716,false
 	],
 	"media/",
 	false,
-	854,
-	480,
+	2000,
+	1024,
 	4,
 	true,
 	true,
@@ -18032,4 +18344,3 @@ false,false,5925217890185716,false
 	[
 	]
 ];};
-
